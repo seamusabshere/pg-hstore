@@ -28,8 +28,9 @@ Load an hstore string but don't symbolize keys:
 ## Authors
 
 * Seamus Abshere <seamus@abshere.net>
+* Greg Price http://web.mit.edu/price/
 * Peter van Hardenberg <pvh@heroku.com>
 
 ## Copyright
 
-Copyright (c) 2013 Peter van Hardenberg and Seamus Abshere. See LICENSE for details.
+Copyright (c) 2013 the authors. See LICENSE for details.

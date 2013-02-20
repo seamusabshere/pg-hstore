@@ -1,11 +1,11 @@
 Gem::Specification.new do |s|
   s.name = 'pg-hstore'
-  s.version = '1.1.6'
+  s.version = '1.1.7'
 
   s.description = "postgresql hstore parser/deparser - provides PgHstore.dump and PgHstore.load (aka parse)"
-  s.summary     = ""
+  s.summary     = "postgresql hstore parser/deparser - provides PgHstore.dump and PgHstore.load (aka parse)"
 
-  s.authors = ["Peter van Hardenberg", "Seamus Abshere"]
+  s.authors = ["Peter van Hardenberg", "Seamus Abshere", "Greg Price"]
   s.email = ["pvh@heroku.com", "seamus@abshere.net"]
 
   s.files = Dir["lib/**/*.rb"]

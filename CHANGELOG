@@ -1,3 +1,13 @@
+1.1.7 / 2013-02-20
+
+* Bug fixes
+
+  * Properly handle all sorts of quotes using E' ("escaped string constant") syntax - thanks @gnprice !
+
+* Enhancements
+
+  * Cleaned up tests - thanks @gnprice and @teeparham !
+
 1.1.6 / 2013-02-06
 
 * Bug fixes
