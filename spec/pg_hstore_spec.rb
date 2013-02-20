@@ -78,7 +78,9 @@ describe "hstores from hashes" do
 
   it "should produce stuff that postgres really likes" do
     require 'pg'
-    uri = URI.parse "postgres://#{`whoami`.strip}:@0.0.0.0:5432/pg_hstore_test"
+    require 'uri'
+    default_uri = "postgres://#{`whoami`.strip}:@0.0.0.0:5432/pg_hstore_test"
+    uri = URI.parse (ENV['PG_HSTORE_TEST_DB_URI'] || default_uri)
     config = {
       host: uri.host,
       port: uri.port,
@@ -87,7 +89,7 @@ describe "hstores from hashes" do
       password: uri.password,
     }
     conn = PG::Connection.new config
-    conn.exec "CREATE EXTENSION IF NOT EXISTS hstore"
+    # conn.exec "CREATE EXTENSION IF NOT EXISTS hstore"
     # conn.exec "SET standard_conforming_strings=on"
     NASTY.each do |data|
       rs = conn.exec %{SELECT $1::hstore AS hstore}, [PgHstore.dump(data, true)]
