@@ -17,27 +17,27 @@ describe "hstores from hashes" do
     ["should translate into a sequel literal",
      {:a => "b", :foo => "bar"},
      '"a"=>"b","foo"=>"bar"',
-     %{$$"a"=>"b","foo"=>"bar"$$} #"
+     %{E'"a"=>"b","foo"=>"bar"'}
     ],
     ["should store an empty string",
      {:nothing => ""},
      '"nothing"=>""',
-     %{$$"nothing"=>""$$} #"
+     %{E'"nothing"=>""'}
     ],
     ["should support single quotes in strings",
      {:journey => "don't stop believin'"},
      %q{"journey"=>"don't stop believin'"},
-     %q{$$"journey"=>"don't stop believin'"$$} #"
+     %q{E'"journey"=>"don\'t stop believin\'"'}
     ],
     ["should support double quotes in strings",
      {:journey => 'He said he was "ready"'},
      %q{"journey"=>"He said he was \"ready\""},
-     %q{$$"journey"=>"He said he was \"ready\""$$} #"
+     %q{E'"journey"=>"He said he was \\\"ready\\\""'}
     ],
     ["should escape \\ garbage in strings",
      {:line_noise => %q[perl -p -e 's/\$\{([^}]+)\}/]}, #'
      %q["line_noise"=>"perl -p -e 's/\\\\$\\\\{([^}]+)\\\\}/"],
-     %q[$$"line_noise"=>"perl -p -e 's/\\\\$\\\\{([^}]+)\\\\}/"$$] #'
+     %q[E'"line_noise"=>"perl -p -e \'s/\\\\\\\\$\\\\\\\\{([^}]+)\\\\\\\\}/"']
     ],
   ]
 

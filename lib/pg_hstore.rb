@@ -1,7 +1,6 @@
 module PgHstore
   SINGLE_QUOTE = "'"
   DOUBLE_QUOTE = '"'
-  DOLLAR_QUOTE = '$$' # TODO not infallible
   HASHROCKET = '=>'
   COMMA = ','
 
@@ -36,7 +35,7 @@ module PgHstore
     if for_parameter
       memo
     else
-      DOLLAR_QUOTE + memo + DOLLAR_QUOTE
+      as_postgresql_string_constant(memo)
     end
   end
 
@@ -67,5 +66,23 @@ module PgHstore
   def PgHstore.escape(string)
     string.to_s.gsub(NON_ESCAPE_SLASH) {ESCAPED_SLASH}.gsub DOUBLE_QUOTE, ESCAPED_DOUBLE_QUOTE
   end
-end
 
+  # Ideally we would use plain SQL string constants, which are very simple:
+  #   http://www.postgresql.org/docs/9.2/static/sql-syntax-lexical.html#SQL-SYNTAX-STRINGS
+  # Unfortunately PostgreSQL treats these differently depending on the
+  # variable standard_conforming_strings, which defaulted to off until 9.1.
+  # It doesn't seem possible to generate them correctly for both cases at
+  # once, and trying to know the value of that variable and dispatch on it
+  # would be awful.
+  #
+  # Instead, use the slightly more cumbersome "escape" string constants:
+  #   http://www.postgresql.org/docs/9.2/static/sql-syntax-lexical.html#SQL-SYNTAX-STRINGS-ESCAPE
+  # They're a little uglier and they're PostgreSQL-specific, but nobody has
+  # to see them and this whole module is PostgreSQL-specific.  And, crucially,
+  # their behavior doesn't vary.  Not allowing injection attacks: priceless.
+  # We don't use any of the fancy escapes, just neuter any backslashes and quotes.
+  def PgHstore.as_postgresql_string_constant(string)
+    interior = string.to_s.gsub('\\') {'\\\\'}.gsub('\'') {'\\\''}
+    "E'" + interior + "'"
+  end
+end
