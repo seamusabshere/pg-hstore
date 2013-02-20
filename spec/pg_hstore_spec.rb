@@ -69,7 +69,7 @@ describe "hstores from hashes" do
     NASTY.each do |data|
       original = data
       3.times do
-        hstore = PgHstore::dump data
+        hstore = PgHstore::dump(data, true)
         data = PgHstore::parse(hstore)
         data.should == original
       end
@@ -111,20 +111,20 @@ describe "hstores from hashes" do
 
   it "should be able to parse hstore strings without ''" do
     data = { :journey => 'He said he was ready' }
-    literal = PgHstore::dump data
-    parsed = PgHstore.parse(literal[2..-3])
+    literal = PgHstore::dump(data, true)
+    parsed = PgHstore.parse(literal)
     parsed.should == data
   end
 
   it "should be stable over iteration" do
-    dump = PgHstore::dump :journey => 'He said he was "ready"'
+    dump = PgHstore::dump({:journey => 'He said he was "ready"'}, true)
     parse = PgHstore::parse dump
 
     original = dump
 
     10.times do
       parsed = PgHstore::parse(dump)
-      dump = PgHstore::dump(parsed)
+      dump = PgHstore::dump(parsed, true)
       dump.should == original
     end
   end

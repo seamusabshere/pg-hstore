@@ -13,7 +13,6 @@ module PgHstore
   # set symbolize_keys = false if you want string keys
   # thanks to https://github.com/engageis/activerecord-postgres-hstore for regexps!
   def PgHstore.load(hstore, symbolize_keys = true)
-    hstore = unquote hstore, DOLLAR_QUOTE
     hstore.scan(PAIR).inject({}) do |memo, (k, v)|
       k = unescape unquote(k, DOUBLE_QUOTE)
       k = k.to_sym if symbolize_keys
