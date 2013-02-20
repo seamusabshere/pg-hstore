@@ -1,43 +1,51 @@
 require './lib/pg_hstore'
 
 describe "hstores from hashes" do
-  it "should translate into a sequel literal" do
-    h = PgHstore::dump :a => "b", :foo => "bar"
-    h.should == %{$$"a"=>"b","foo"=>"bar"$$}
-  end
-
   it "should set a value correctly" do
     h = PgHstore::parse (
       %{"ip"=>"17.34.44.22", "service_available?"=>"false"})
     h[:service_available?].should == "false"
   end
 
-  it "should store an empty string" do
-    hstore = PgHstore::dump :nothing => ""
-    hstore.should == %{$$"nothing"=>""$$}
-  end
-
-  it "should support single quotes in strings" do
-    hstore = PgHstore::dump :journey => "don't stop believin'"
-    hstore.should == %q{$$"journey"=>"don't stop believin'"$$}
-  end
-
-  it "should support double quotes in strings" do
-    hstore = PgHstore::dump :journey => 'He said he was "ready"'
-    hstore.should == %q{$$"journey"=>"He said he was \"ready\""$$}
-  end
-
-  it "should escape \ garbage in strings" do
-    hstore = PgHstore::dump :line_noise => %q[perl -p -e 's/\$\{([^}]+)\}/] #'
-    hstore.should == %q[$$"line_noise"=>"perl -p -e 's/\\\\$\\\\{([^}]+)\\\\}/"$$]
-  end
-
   it "should parse an empty string" do
     hstore = PgHstore.parse(
       %{"ip"=>"", "service_available?"=>"false"})
-
     hstore[:ip].should == ""
-    hstore[:ip].should_not == nil
+  end
+
+  DATA = [
+    ["should translate into a sequel literal",
+     {:a => "b", :foo => "bar"},
+     '"a"=>"b","foo"=>"bar"',
+     %{$$"a"=>"b","foo"=>"bar"$$} #"
+    ],
+    ["should store an empty string",
+     {:nothing => ""},
+     '"nothing"=>""',
+     %{$$"nothing"=>""$$} #"
+    ],
+    ["should support single quotes in strings",
+     {:journey => "don't stop believin'"},
+     %q{"journey"=>"don't stop believin'"},
+     %q{$$"journey"=>"don't stop believin'"$$} #"
+    ],
+    ["should support double quotes in strings",
+     {:journey => 'He said he was "ready"'},
+     %q{"journey"=>"He said he was \"ready\""},
+     %q{$$"journey"=>"He said he was \"ready\""$$} #"
+    ],
+    ["should escape \\ garbage in strings",
+     {:line_noise => %q[perl -p -e 's/\$\{([^}]+)\}/]}, #'
+     %q["line_noise"=>"perl -p -e 's/\\\\$\\\\{([^}]+)\\\\}/"],
+     %q[$$"line_noise"=>"perl -p -e 's/\\\\$\\\\{([^}]+)\\\\}/"$$] #'
+    ],
+  ]
+
+  DATA.each do |name, hash, encoded, string_constant|
+    it name do
+      PgHstore.dump(hash, true).should == encoded
+      PgHstore.dump(hash).should == string_constant
+    end
   end
 
   NASTY = [
@@ -87,11 +95,6 @@ describe "hstores from hashes" do
       rs = conn.exec %{SELECT #{PgHstore.dump(data)}::hstore AS hstore}
       PgHstore.load(rs[0]['hstore']).should == data
     end
-  end
-
-  # https://github.com/engageis/activerecord-postgres-hstore/issues/78
-  it "should pass @teeparham's tests" do
-    PgHstore.dump({"a" => "\"a\""}, true).should == %q("a"=>"\"a\"")
   end
 
   it "should be able to parse hstore strings without ''" do
