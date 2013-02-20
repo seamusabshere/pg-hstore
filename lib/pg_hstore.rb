@@ -1,14 +1,22 @@
 module PgHstore
   SINGLE_QUOTE = "'"
+  E_SINGLE_QUOTE = "E'"
   DOUBLE_QUOTE = '"'
   HASHROCKET = '=>'
   COMMA = ','
+  SLASH = '\\'
+
+  ESCAPED_CHAR = /\\(.)/
+  ESCAPED_SINGLE_QUOTE = '\\\''
+  ESCAPED_DOUBLE_QUOTE = '\\"'
+  ESCAPED_SLASH = '\\\\'
 
   QUOTED_LITERAL = /"[^"\\]*(?:\\.[^"\\]*)*"/
   UNQUOTED_LITERAL = /[^\s=,][^\s=,\\]*(?:\\.[^\s=,\\]*|=[^,>])*/
   LITERAL = /(#{QUOTED_LITERAL}|#{UNQUOTED_LITERAL})/
   PAIR = /#{LITERAL}\s*=>\s*#{LITERAL}/
   NULL = /\ANULL\z/i
+  
   # set symbolize_keys = false if you want string keys
   # thanks to https://github.com/engageis/activerecord-postgres-hstore for regexps!
   def PgHstore.load(hstore, symbolize_keys = true)
@@ -61,7 +69,6 @@ module PgHstore
     end
   end
 
-  ESCAPED_CHAR = /\\(.)/
   def PgHstore.unescape(literal)
     literal.gsub ESCAPED_CHAR, '\1'
   end
@@ -76,8 +83,10 @@ module PgHstore
   #
   # You got it, boss.
   def PgHstore.escape_nonnull_for_hstore(string)
-    interior = string.to_s.gsub('\\') {'\\\\'}.gsub('"', '\\"')
-    '"' + interior + '"'
+    interior = string.to_s.dup
+    interior.gsub!(SLASH) {ESCAPED_SLASH}
+    interior.gsub!(DOUBLE_QUOTE, ESCAPED_DOUBLE_QUOTE)
+    DOUBLE_QUOTE + interior + DOUBLE_QUOTE
   end
 
   # Escape a string as a string constant to be used in a SQL query
@@ -98,7 +107,9 @@ module PgHstore
   # their behavior doesn't vary.  Not allowing injection attacks: priceless.
   # We don't use any of the fancy escapes, just neuter any backslashes and quotes.
   def PgHstore.as_postgresql_string_constant(string)
-    interior = string.to_s.gsub('\\') {'\\\\'}.gsub('\'') {'\\\''}
-    "E'" + interior + "'"
+    interior = string.to_s.dup
+    interior.gsub!(SLASH) {ESCAPED_SLASH}
+    interior.gsub!(SINGLE_QUOTE) {ESCAPED_SINGLE_QUOTE}
+    E_SINGLE_QUOTE + interior + SINGLE_QUOTE
   end
 end
