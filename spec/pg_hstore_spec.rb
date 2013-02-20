@@ -13,6 +13,11 @@ describe "hstores from hashes" do
     hstore[:ip].should == ""
   end
 
+  it "should parse NULL as a value" do
+    hstore = PgHstore.parse(%{"x"=>NULL})
+    hstore.should == {x: nil}
+  end
+
   DATA = [
     ["should translate into a sequel literal",
      {:a => "b", :foo => "bar"},
@@ -23,6 +28,11 @@ describe "hstores from hashes" do
      {:nothing => ""},
      '"nothing"=>""',
      %{E'"nothing"=>""'}
+    ],
+    ["should render nil as NULL",
+     {:x => nil},
+     '"x"=>NULL',
+     %{E'"x"=>NULL'}
     ],
     ["should support single quotes in strings",
      {:journey => "don't stop believin'"},
