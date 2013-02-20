@@ -97,6 +97,16 @@ describe "hstores from hashes" do
       rs = conn.exec %{SELECT #{PgHstore.dump(data)}::hstore AS hstore}
       PgHstore.load(rs[0]['hstore']).should == data
     end
+    DATA.each do |name, hash, encoded, string_constant|
+      # Already tested PgHstore.dump produces what we expect for these,
+      # so test that what we expect is acceptable to PostgreSQL.
+      ret = conn.exec(%{SELECT $1::hstore AS hstore}, [encoded])[0]['hstore']
+      ret.should == encoded.gsub(',', ', ')
+      PgHstore.load(ret).should == hash
+      ret = conn.exec(%{SELECT #{string_constant}::hstore AS hstore})[0]['hstore']
+      ret.should == encoded.gsub(',', ', ')
+      PgHstore.load(ret).should == hash
+    end
   end
 
   it "should be able to parse hstore strings without ''" do
