@@ -1,23 +1,15 @@
 require './lib/pg_hstore'
 
 describe "hstores from hashes" do
-  before do
-    @h = PgHstore::dump :a => "b", :foo => "bar"
-  end
-
   it "should translate into a sequel literal" do
-    @h.should == %{$$"a"=>"b","foo"=>"bar"$$}
-  end
-end
-
-describe "creating hstores from strings" do
-  before do
-    @h = PgHstore::parse (
-      %{"ip"=>"17.34.44.22", "service_available?"=>"false"})
+    h = PgHstore::dump :a => "b", :foo => "bar"
+    h.should == %{$$"a"=>"b","foo"=>"bar"$$}
   end
 
   it "should set a value correctly" do
-    @h[:service_available?].should == "false"
+    h = PgHstore::parse (
+      %{"ip"=>"17.34.44.22", "service_available?"=>"false"})
+    h[:service_available?].should == "false"
   end
 
   it "should store an empty string" do
