@@ -73,7 +73,7 @@ describe "hstores from hashes" do
     { :f => '\\\"\\""\\' },
     { :g => "\\\'\\''\\" },
     { :h => "$$; SELECT 'lol=>lol' AS hstore; --"},
-    { :z => "');DROP SCHEMA public;--"},
+    { :z => "');SELECT 'lol=>lol' AS hstore;--"},
   ]
 
   it "should be able to parse its own output" do
