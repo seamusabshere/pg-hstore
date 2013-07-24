@@ -4,48 +4,48 @@ describe "hstores from hashes" do
   it "should set a value correctly" do
     h = PgHstore::parse (
       %{"ip"=>"17.34.44.22", "service_available?"=>"false"})
-    h[:service_available?].should == "false"
+    h['service_available?'].should == "false"
   end
 
   it "should parse an empty string" do
     hstore = PgHstore.parse(
       %{"ip"=>"", "service_available?"=>"false"})
-    hstore[:ip].should == ""
+    hstore['ip'].should == ""
   end
 
   it "should parse NULL as a value" do
     hstore = PgHstore.parse(%{"x"=>NULL})
-    hstore.should == {x: nil}
+    hstore.should == {'x' => nil}
   end
 
   DATA = [
     ["should translate into a sequel literal",
-     {:a => "b", :foo => "bar"},
+     {'a' => "b", 'foo' => "bar"},
      '"a"=>"b","foo"=>"bar"',
      %{E'"a"=>"b","foo"=>"bar"'}
     ],
     ["should store an empty string",
-     {:nothing => ""},
+     {'nothing' => ""},
      '"nothing"=>""',
      %{E'"nothing"=>""'}
     ],
     ["should render nil as NULL",
-     {:x => nil},
+     {'x' => nil},
      '"x"=>NULL',
      %{E'"x"=>NULL'}
     ],
     ["should support single quotes in strings",
-     {:journey => "don't stop believin'"},
+     {'journey' => "don't stop believin'"},
      %q{"journey"=>"don't stop believin'"},
      %q{E'"journey"=>"don\'t stop believin\'"'}
     ],
     ["should support double quotes in strings",
-     {:journey => 'He said he was "ready"'},
+     {'journey' => 'He said he was "ready"'},
      %q{"journey"=>"He said he was \"ready\""},
      %q{E'"journey"=>"He said he was \\\"ready\\\""'}
     ],
     ["should escape \\ garbage in strings",
-     {:line_noise => %q[perl -p -e 's/\$\{([^}]+)\}/]}, #'
+     {'line_noise' => %q[perl -p -e 's/\$\{([^}]+)\}/]}, #'
      %q["line_noise"=>"perl -p -e 's/\\\\$\\\\{([^}]+)\\\\}/"],
      %q[E'"line_noise"=>"perl -p -e \'s/\\\\\\\\$\\\\\\\\{([^}]+)\\\\\\\\}/"']
     ],
@@ -59,21 +59,21 @@ describe "hstores from hashes" do
   end
 
   NASTY = [
-    { :journey => 'He said he was ready' },
-    { :a => '\\' },
-    { :b => '\\\\' },
-    { :b1 => '\\"' },
-    { :b2 => '\\"\\' },
-    { :c => '\\\\\\' },
-    { :d => '\\"\\""\\' },
-    { :d1 => '\"\"\\""\\' },
-    { :e => "''" },
-    { :e => "\\'\\''\\" },
-    { :e1 => "\\'\\''\"" },
-    { :f => '\\\"\\""\\' },
-    { :g => "\\\'\\''\\" },
-    { :h => "$$; SELECT 'lol=>lol' AS hstore; --"},
-    { :z => "');SELECT 'lol=>lol' AS hstore;--"},
+    { 'journey' => 'He said he was ready' },
+    { 'a' => '\\' },
+    { 'b' => '\\\\' },
+    { 'b1' => '\\"' },
+    { 'b2' => '\\"\\' },
+    { 'c' => '\\\\\\' },
+    { 'd' => '\\"\\""\\' },
+    { 'd1' => '\"\"\\""\\' },
+    { 'e' => "''" },
+    { 'e' => "\\'\\''\\" },
+    { 'e1' => "\\'\\''\"" },
+    { 'f' => '\\\"\\""\\' },
+    { 'g' => "\\\'\\''\\" },
+    { 'h' => "$$; SELECT 'lol=>lol' AS hstore; --"},
+    { 'z' => "');SELECT 'lol=>lol' AS hstore;--"},
   ]
 
   it "should be able to parse its own output" do
@@ -121,14 +121,14 @@ describe "hstores from hashes" do
   end
 
   it "should be able to parse hstore strings without ''" do
-    data = { :journey => 'He said he was ready' }
+    data = { 'journey' => 'He said he was ready' }
     literal = PgHstore::dump(data, true)
     parsed = PgHstore.parse(literal)
     parsed.should == data
   end
 
   it "should be stable over iteration" do
-    dump = PgHstore::dump({:journey => 'He said he was "ready"'}, true)
+    dump = PgHstore::dump({'journey' => 'He said he was "ready"'}, true)
     parse = PgHstore::parse dump
 
     original = dump
@@ -138,6 +138,11 @@ describe "hstores from hashes" do
       dump = PgHstore::dump(parsed, true)
       dump.should == original
     end
+  end
+
+  it "should symbolize keys if requested" do
+    h = PgHstore::parse(%{"ip"=>"17.34.44.22", "service_available?"=>"false"}, true)
+    h[:service_available?].should == "false"
   end
 end
 

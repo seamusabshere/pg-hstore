@@ -17,9 +17,10 @@ module PgHstore
   PAIR = /#{LITERAL}\s*=>\s*#{LITERAL}/
   NULL = /\ANULL\z/i
   
-  # set symbolize_keys = false if you want string keys
+  # STRING KEYS BY DEFAULT
+  # set symbolize_keys = true if you want symbol keys
   # thanks to https://github.com/engageis/activerecord-postgres-hstore for regexps!
-  def PgHstore.load(hstore, symbolize_keys = true)
+  def PgHstore.load(hstore, symbolize_keys = false)
     hstore.scan(PAIR).inject({}) do |memo, (k, v)|
       k = unescape unquote(k, DOUBLE_QUOTE)
       k = k.to_sym if symbolize_keys
