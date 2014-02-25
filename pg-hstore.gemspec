@@ -12,6 +12,10 @@ Gem::Specification.new do |s|
 
   s.add_development_dependency 'rspec'
   s.add_development_dependency 'pg'
+  s.add_development_dependency 'multi_json'
+  s.add_development_dependency 'pry'
+  s.add_development_dependency 'oj'
+  
   s.homepage = "https://github.com/seamusabshere/pg-hstore"
   s.require_paths = %w[lib]
 end

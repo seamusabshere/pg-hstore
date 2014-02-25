@@ -1,4 +1,4 @@
-require './lib/pg_hstore'
+require 'spec_helper'
 
 describe "hstores from hashes" do
   it "should set a value correctly" do
@@ -74,15 +74,20 @@ describe "hstores from hashes" do
     { 'g' => "\\\'\\''\\" },
     { 'h' => "$$; SELECT 'lol=>lol' AS hstore; --"},
     { 'z' => "');SELECT 'lol=>lol' AS hstore;--"},
+    { 'n1' => 1 },
+    { 'n2' => 1.5 },
+    { 'n3' => 2e3 },
+    { 'n4' => 2.3e4 },
   ]
 
   it "should be able to parse its own output" do
     NASTY.each do |data|
-      original = data
+      typed = data
+      untyped = data.inject({}) { |memo, (k, v)| memo[k] = v.to_s; memo } # all strings
       3.times do
-        hstore = PgHstore::dump(data, true)
-        data = PgHstore::parse(hstore)
-        data.should == original
+        hstore = PgHstore.dump(data, true)
+        PgHstore.load(hstore).should == untyped
+        PgHstore.load_loose(hstore).should == typed
       end
     end
   end
@@ -103,6 +108,7 @@ describe "hstores from hashes" do
     # conn.exec "CREATE EXTENSION IF NOT EXISTS hstore"
     # conn.exec "SET standard_conforming_strings=on"
     NASTY.each do |data|
+      data = data.inject({}) { |memo, (k, v)| memo[k] = v.to_s; memo } # all strings
       rs = conn.exec %{SELECT $1::hstore AS hstore}, [PgHstore.dump(data, true)]
       PgHstore.load(rs[0]['hstore']).should == data
       rs = conn.exec %{SELECT #{PgHstore.dump(data)}::hstore AS hstore}
@@ -144,5 +150,34 @@ describe "hstores from hashes" do
     h = PgHstore::parse(%{"ip"=>"17.34.44.22", "service_available?"=>"false"}, true)
     h[:service_available?].should == "false"
   end
+
+  # http://git.postgresql.org/gitweb/?p=postgresql.git;a=blob_plain;f=contrib/hstore/expected/hstore.out;hb=HEAD
+
+  # select hstore_to_json('"a key" =>1, b => t, c => null, d=> 12345, e => 012345, f=> 1.234, g=> 2.345e+4');
+  #                                          hstore_to_json                                          
+  # -------------------------------------------------------------------------------------------------
+  #  {"b": "t", "c": null, "d": "12345", "e": "012345", "f": "1.234", "g": "2.345e+4", "a key": "1"}
+  # (1 row)
+  it "a" do
+    PgHstore.load('"a key" =>1, b => t, c => null, d=> 12345, e => 012345, f=> 1.234, g=> 2.345e+4').should == MultiJson.load('{"b": "t", "c": null, "d": "12345", "e": "012345", "f": "1.234", "g": "2.345e+4", "a key": "1"}')
+  end
+
+  it "a1" do
+    PgHstore.load('"a key" =>"1", b => "t", c => "null", d=> "12345", e => "012345", f=> "1.234", g=> "2.345e+4"').should == MultiJson.load('{"b": "t", "c": "null", "d": "12345", "e": "012345", "f": "1.234", "g": "2.345e+4", "a key": "1"}')
+  end
+
+  # select hstore_to_json_loose('"a key" =>1, b => t, c => null, d=> 12345, e => 012345, f=> 1.234, g=> 2.345e+4');
+  #                                    hstore_to_json_loose                                   
+  # ------------------------------------------------------------------------------------------
+  #  {"b": true, "c": null, "d": 12345, "e": "012345", "f": 1.234, "g": 2.345e+4, "a key": 1}
+  # (1 row)
+  it "b" do
+    PgHstore.load_loose('"a key" =>1, b => t, c => null, d=> 12345, e => 012345, f=> 1.234, g=> 2.345e+4').should == MultiJson.load('{"b": true, "c": null, "d": 12345, "e": "012345", "f": 1.234, "g": 2.345e+4, "a key": 1}')
+  end
+
+  it "b1" do
+    PgHstore.load_loose('"a key" =>"1", b => "t", c => "null", d=> "12345", e => "012345", f=> "1.234", g=> "2.345e+4"').should == MultiJson.load('{"b": true, "c": null, "d": 12345, "e": "012345", "f": 1.234, "g": 2.345e+4, "a key": 1}')
+  end
+
 end
 

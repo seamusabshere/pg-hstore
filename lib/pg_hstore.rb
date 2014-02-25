@@ -16,6 +16,9 @@ module PgHstore
   LITERAL = /(#{QUOTED_LITERAL}|#{UNQUOTED_LITERAL})/
   PAIR = /#{LITERAL}\s*=>\s*#{LITERAL}/
   NULL = /\ANULL\z/i
+  TRUE = /\At(?:rue)?\z/i
+  FALSE = /\Af(?:alse)?\z/i
+  NUMBER = /\A[1-9][\d.e+\-]*\z/
   
   # STRING KEYS BY DEFAULT
   # set symbolize_keys = true if you want symbol keys
@@ -25,6 +28,27 @@ module PgHstore
       k = unescape unquote(k, DOUBLE_QUOTE)
       k = k.to_sym if symbolize_keys
       v = (v =~ NULL) ? nil : unescape(unquote(v, DOUBLE_QUOTE))
+      memo[k] = v
+      memo
+    end
+  end
+
+  def PgHstore.load_loose(hstore)
+    hstore.scan(PAIR).inject({}) do |memo, (k, v)|
+      k = unescape unquote(k, DOUBLE_QUOTE)
+      v = unquote v, DOUBLE_QUOTE
+      v = case v
+      when NULL
+        nil
+      when TRUE
+        true
+      when FALSE
+        false
+      when NUMBER
+        v.include?('.') ? v.to_f : v.to_f.to_i
+      else
+        unescape v
+      end
       memo[k] = v
       memo
     end
